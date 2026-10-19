@@ -1,329 +1,479 @@
-import axios from "axios";
 import React, { useEffect, useState } from "react";
-import CourseCard from "../../dashboard/CourseCard";
+import CourseCard from "@/components/molecules/dashboard/cards/courseCard";
 import CourseCardSkeleton from "@/components/atoms/skeletons/CourseCardSkeleton";
 import LibraryBookCard from "@/components/molecules/dashboard/cards/libraryCard";
+import SpaceCard from "@/components/molecules/dashboard/cards/spaceCard";
+import UserCard from "@/components/molecules/dashboard/cards/userCard";
+import { fetchUserCourses } from "@/lib/actions/courses/fetch-user-id-courses";
+import { fetchUserBooks } from "@/lib/actions/library/fetch-user-id-books";
+import { fetchUserSpaces } from "@/lib/actions/spaces/fetchUserSpaces";
+import {
+  getFollowers,
+  getFollowing,
+  getFollowersCount,
+  getFollowingCount,
+} from "@/hooks/useFollow";
+import { useAuth } from "@/hooks/useAuth";
 
-const ProfileContent = ({ selectedTab }) => {
-    switch (selectedTab) {
-        case "courses":
-            return <CoursesTab />;
-        case "books":
-            return <BooksTab />;
-        case "saved":
-            return <SavedTab />;
-        case "achievements":
-            return <AchievementsTab />;
-        case "followers":
-            return <FollowersTab />;
-        case "following":
-            return <FollowingTab />;
-        case "about":
-            return <AboutTab />;
-        default:
-            return <div>Coming soon...</div>;
-    }
+import NetworkErrorComp from "@/components/molecules/errors/NetworkError";
+
+const ProfileContent = ({ selectedTab, profileId }) => {
+  switch (selectedTab) {
+    case "courses":
+      return <CoursesTab key="courses" profileId={profileId} />;
+    case "books":
+      return <BooksTab key="books" profileId={profileId} />;
+    case "spaces":
+      return <SpaceTab key="spaces" profileId={profileId} />;
+    case "followers":
+      return <FollowersTab key="followers" profileId={profileId} />;
+    case "following":
+      return <FollowingTab key="following" profileId={profileId} />;
+    default:
+      return <div>Coming soon...</div>;
+  }
 };
 
 export default ProfileContent;
 
 // Temporary placeholder components
 const Placeholder = ({ title }) => (
-    <div className="p-6 text-center text-muted-foreground text-lg">
-        No {title} yet. Stay tuned!
-    </div>
+  <div className="p-6 text-center text-ink-muted text-lg">
+    No {title} yet. Stay tuned!
+  </div>
 );
 
-const CoursesTab = () => {
-    const [courses, setCourses] = useState([{}]);
-    const [isLoading, setIsLoading] = useState(true);
-    useEffect(() => {
-        const fetchCourses = async () => {
-            try {
-                setIsLoading(true);
-                console.log("loading..");
-                const res = await axios.get('/api/courses');
-                console.log(res.data);
-                setCourses(res.data);
-                setIsLoading(false)
-            } catch (error) {
-                console.log(error);
-                setIsLoading(false);
-            }
+const CoursesTab = ({ profileId }) => {
+  const { loading } = useAuth();
+  const [userCourses, setUserCourses] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (loading) return;
+    const getCourses = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        if (profileId) {
+          console.log("Fetching courses for profileId:", profileId);
+          const data = await fetchUserCourses(profileId);
+          setUserCourses(data);
+        } else {
+          userCourses([]);
+          setError("User not found or not logged in");
         }
-        fetchCourses();
-    }, []);
+      } catch (err) {
+        setUserCourses([]);
+        setError("Failed to fetch courses. Please check your connection.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getCourses();
+  }, [loading]);
+
+  if (error) {
     return (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 pt-5">
-            {isLoading ? (
-                // Show skeletons while loading
-                [...Array(6)].map((_, idx) => <CourseCardSkeleton key={idx} />)
-            ) : courses && courses.length > 0 ? (
-                // Map over courses when loaded
-                courses.map((course, index) => (
-                    <CourseCard key={course.id || index} course={course} />
-                ))
-            ) : (
-                // Show placeholder if no courses
-                <Placeholder title="courses" />
-            )}
-        </div>
+      <NetworkErrorComp
+        errMsg={error}
+        reset={() => {
+          setError(null);
+          setIsLoading(true);
+          if (profileId) {
+            fetchUserCourses(profileId)
+              .then((data) => setUserCourses(data))
+              .catch(() =>
+                setError(
+                  "Failed to fetch courses. Please check your connection."
+                )
+              )
+              .finally(() => setIsLoading(false));
+          }
+        }}
+      />
     );
-};
-const BooksTab = () => {
-    const books = [
-        {
-            id: 1,
-            title: "Riyadh as-Salihin",
-            author: "Imam Nawawi",
-            category: "Hadith",
-            price: 0,
-            readCount: 120,
-            rating: 5.0,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 2,
-            title: "The Fundamentals of Tawheed",
-            author: "Dr. Bilal Philips",
-            category: "Aqidah",
-            price: 5,
-            readCount: 45,
-            rating: 4.5,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 3,
-            title: "In the Footsteps of the Prophet",
-            author: "Tariq Ramadan",
-            category: "Seerah",
-            price: 5,
-            readCount: 60,
-            rating: 2.5,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 4,
-            title: "Fortress of the Muslim",
-            author: "Sa'id bin Wahf al-Qahtani",
-            category: "Dua",
-            price: 0,
-            readCount: 220,
-            rating: 5.0,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 5,
-            title: "Don't Be Sad",
-            author: "Dr. Aaidh al-Qarni",
-            category: "Self-help",
-            price: 10,
-            readCount: 180,
-            rating: 4.7,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 6,
-            title: "La Tahzan (Don't Be Sad)",
-            author: "Dr. Aaidh al-Qarni",
-            category: "Motivation",
-            price: 8,
-            readCount: 90,
-            rating: 4.2,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 7,
-            title: "Stories of the Prophets",
-            author: "Ibn Kathir",
-            category: "History",
-            price: 0,
-            readCount: 150,
-            rating: 5.0,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 8,
-            title: "Fiqh-us-Sunnah",
-            author: "Sayyid Sabiq",
-            category: "Fiqh",
-            price: 15,
-            readCount: 75,
-            rating: 4.6,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 9,
-            title: "The Sealed Nectar",
-            author: "Safiyyur-Rahman al-Mubarakpuri",
-            category: "Seerah",
-            price: 12,
-            readCount: 210,
-            rating: 4.9,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 10,
-            title: "Tafsir Ibn Kathir",
-            author: "Ibn Kathir",
-            category: "Tafsir",
-            price: 0,
-            readCount: 300,
-            rating: 5.0,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 11,
-            title: "The Book of Manners",
-            author: "Fu'ad Ibn 'Abd Al-'Azeez Ash-Shulhoob",
-            category: "Akhlaq",
-            price: 5,
-            readCount: 100,
-            rating: 4.4,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 12,
-            title: "The Life of Muhammad",
-            author: "Muhammad Husayn Haykal",
-            category: "Biography",
-            price: 10,
-            readCount: 95,
-            rating: 4.3,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 13,
-            title: "Explanation of the Three Fundamental Principles",
-            author: "Shaykh Muhammad ibn Saalih al-Uthaymeen",
-            category: "Aqidah",
-            price: 6,
-            readCount: 55,
-            rating: 4.6,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 14,
-            title: "The Creed of Imam Tahawi",
-            author: "Imam Abu Ja'far al-Tahawi",
-            category: "Aqidah",
-            price: 7,
-            readCount: 40,
-            rating: 4.1,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 15,
-            title: "Purification of the Heart",
-            author: "Hamza Yusuf",
-            category: "Tazkiyah",
-            price: 9,
-            readCount: 65,
-            rating: 4.7,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 16,
-            title: "The Path to Guidance",
-            author: "Ibn Qudamah al-Maqdisi",
-            category: "Spirituality",
-            price: 5,
-            readCount: 88,
-            rating: 4.4,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 17,
-            title: "Kitab al-Tawheed",
-            author: "Muhammad ibn Abdul Wahhab",
-            category: "Aqidah",
-            price: 0,
-            readCount: 140,
-            rating: 4.9,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 18,
-            title: "The Ideal Muslimah",
-            author: "Dr. Muhammad Ali Al-Hashimi",
-            category: "Women",
-            price: 10,
-            readCount: 110,
-            rating: 4.8,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 19,
-            title: "The Ideal Muslim",
-            author: "Dr. Muhammad Ali Al-Hashimi",
-            category: "Men",
-            price: 10,
-            readCount: 70,
-            rating: 4.6,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 20,
-            title: "Al-Adab Al-Mufrad",
-            author: "Imam Bukhari",
-            category: "Hadith",
-            price: 0,
-            readCount: 130,
-            rating: 5.0,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 21,
-            title: "Signs Before the Day of Judgment",
-            author: "Ibn Kathir",
-            category: "End Times",
-            price: 5,
-            readCount: 125,
-            rating: 4.3,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 22,
-            title: "A Brief Illustrated Guide to Understanding Islam",
-            author: "I.A. Ibrahim",
-            category: "Introductory",
-            price: 0,
-            readCount: 200,
-            rating: 4.5,
-            image: "/images/img-2.jpeg",
-        },
-        {
-            id: 23,
-            title: "Enjoy Your Life",
-            author: "Dr. Muhammad al-Arifi",
-            category: "Self-help",
-            price: 6,
-            readCount: 85,
-            rating: 4.7,
-            image: "/images/img-2.jpeg",
-        }
-    ];
-    return (
-        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 pt-5">
-            {books && books.length > 0 ? (
-                books.map((book) => (
-                    <LibraryBookCard key={book.id} book={book} />
-                ))
-            ) : (
-                <Placeholder title="books" />
-            )}
-        </div>
-    );
-};
-const SavedTab = () => <Placeholder title="saved items" />;
-const AchievementsTab = () => <Placeholder title="achievements" />;
-const FollowersTab = () => <Placeholder title="followers" />;
-const FollowingTab = () => <Placeholder title="following" />;
-const AboutTab = () => (
-    <div className="p-6 space-y-2 text-base">
-        <p>
-            <strong>About Ali Jamal:</strong> A passionate learner who loves technology,
-            books, and exploring new skills through online platforms.
-        </p>
+  }
+
+  return (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 pt-5">
+      {isLoading ? (
+        [...Array(6)].map((_, idx) => <CourseCardSkeleton key={idx} />)
+      ) : userCourses && userCourses.length > 0 ? (
+        userCourses.map((course, index) => (
+          <CourseCard key={course.id || course._id || index} course={course} />
+        ))
+      ) : (
+        <Placeholder title="courses" />
+      )}
     </div>
-);
+  );
+};
+
+const BooksTab = ({ profileId }) => {
+  const { loading } = useAuth(); // you don't need user here
+  const [userBooks, setUserBooks] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (loading || !profileId) return; // Wait for loading to finish
+    const getBooks = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log("Fetching books for profileId:", profileId);
+        const data = await fetchUserBooks(profileId);
+        setUserBooks(data);
+      } catch (err) {
+        setUserBooks([]);
+        setError("Failed to fetch books. Please check your connection.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getBooks();
+  }, [profileId, loading]);
+
+  if (error) {
+    return (
+      <NetworkErrorComp
+        errMsg={error}
+        reset={() => {
+          setError(null);
+          setIsLoading(true);
+          if (profileId) {
+            fetchUserBooks(profileId)
+              .then((data) => setUserBooks(data))
+              .catch(() =>
+                setError("Failed to fetch books. Please check your connection.")
+              )
+              .finally(() => setIsLoading(false));
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 pt-5">
+      {isLoading ? (
+        [...Array(6)].map((_, idx) => <CourseCardSkeleton key={idx} />)
+      ) : userBooks && userBooks.length > 0 ? (
+        userBooks.map((book) => (
+          <LibraryBookCard key={book.id || book._id} book={book} />
+        ))
+      ) : (
+        <Placeholder title="books" />
+      )}
+    </div>
+  );
+};
+const SpaceTab = ({ profileId }) => {
+  const { loading } = useAuth();
+  const [userSpaces, setUserSpaces] = useState([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    if (loading) return;
+    const getSpaces = async () => {
+      setIsLoading(true);
+      setError(null);
+      try {
+        if (profileId) {
+          console.log("Fetching spaces for profileId:", profileId);
+          const data = await fetchUserSpaces(profileId);
+          console.log("Fetched spaces data:", data);
+          setUserSpaces(data.spaces || []);
+        } else {
+          setUserSpaces([]);
+          setError("User not found or not logged in");
+        }
+      } catch (err) {
+        setUserSpaces([]);
+        setError("Failed to fetch spaces. Please check your connection.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+    getSpaces();
+  }, [loading]);
+
+  if (error) {
+    return (
+      <NetworkErrorComp
+        errMsg={error}
+        reset={() => {
+          setError(null);
+          setIsLoading(true);
+          if (profileId) {
+            fetchUserSpaces(profileId)
+              .then((data) => setUserSpaces(data.spaces || []))
+              .catch(() =>
+                setError(
+                  "Failed to fetch spaces. Please check your connection."
+                )
+              )
+              .finally(() => setIsLoading(false));
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 md:grid-cols-2 lg:grid-cols-3 pt-5">
+      {isLoading ? (
+        [...Array(6)].map((_, idx) => <CourseCardSkeleton key={idx} />)
+      ) : userSpaces && userSpaces.length > 0 ? (
+        userSpaces.map((space, index) => (
+          <SpaceCard key={space.id || space._id || index} space={space} />
+        ))
+      ) : (
+        <Placeholder title="spaces" />
+      )}
+    </div>
+  );
+};
+const FollowersTab = ({ profileId }) => {
+  const { loading: authLoading } = useAuth();
+  const [followers, setFollowers] = useState([]);
+  const [followersCount, setFollowersCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log("FollowersTab useEffect triggered:", {
+      authLoading,
+      profileId,
+    });
+
+    if (authLoading || !profileId) {
+      console.log(
+        "FollowersTab: Skipping fetch due to authLoading or no profileId"
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    const getFollowersData = async () => {
+      console.log("FollowersTab: Starting to fetch data");
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log("Fetching followers for profileId:", profileId);
+        const [followersData, countData] = await Promise.all([
+          getFollowers(profileId),
+          getFollowersCount(profileId),
+        ]);
+
+        console.log("FollowersTab API responses:", {
+          followersData,
+          countData,
+        });
+
+        if (followersData.success) {
+          setFollowers(followersData.followers || []);
+        }
+
+        if (countData.success) {
+          setFollowersCount(countData.followersCount || countData.count || 0);
+        }
+      } catch (err) {
+        setFollowers([]);
+        setFollowersCount(0);
+        setError("Failed to fetch followers. Please check your connection.");
+      } finally {
+        console.log("FollowersTab: Finished fetching data");
+        setIsLoading(false);
+      }
+    };
+
+    getFollowersData();
+  }, [profileId, authLoading]);
+
+  console.log("FollowersTab render:", { isLoading, followersCount, error });
+
+  if (error) {
+    return (
+      <NetworkErrorComp
+        errMsg={error}
+        reset={() => {
+          setError(null);
+          setIsLoading(true);
+          if (profileId) {
+            Promise.all([getFollowers(profileId), getFollowersCount(profileId)])
+              .then(([followersData, countData]) => {
+                if (followersData.success) {
+                  setFollowers(followersData.followers || []);
+                }
+                if (countData.success) {
+                  setFollowersCount(
+                    countData.followersCount || countData.count || 0
+                  );
+                }
+              })
+              .catch(() =>
+                setError(
+                  "Failed to fetch followers. Please check your connection."
+                )
+              )
+              .finally(() => setIsLoading(false));
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4 pt-5">
+      {isLoading ? (
+        <div className="space-y-4">
+          {[...Array(6)].map((_, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-4 p-4 bg-surface/30 rounded-lg animate-pulse"
+            >
+              <div className="h-12 w-12 bg-surface rounded-full"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-surface rounded w-1/3"></div>
+                <div className="h-3 bg-surface rounded w-1/2"></div>
+              </div>
+              <div className="h-8 w-20 bg-surface rounded"></div>
+            </div>
+          ))}
+        </div>
+      ) : followers && followers.length > 0 ? (
+        <div className="space-y-3">
+          {followers.map((follower) => (
+            <UserCard key={follower._id} user={follower} />
+          ))}
+        </div>
+      ) : (
+        <Placeholder title="followers" />
+      )}
+    </div>
+  );
+};
+
+const FollowingTab = ({ profileId }) => {
+  const { loading: authLoading } = useAuth();
+  const [following, setFollowing] = useState([]);
+  const [followingCount, setFollowingCount] = useState(0);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    console.log("FollowingTab useEffect triggered:", {
+      authLoading,
+      profileId,
+    });
+
+    if (authLoading || !profileId) {
+      console.log(
+        "FollowingTab: Skipping fetch due to authLoading or no profileId"
+      );
+      setIsLoading(false);
+      return;
+    }
+
+    const getFollowingData = async () => {
+      console.log("FollowingTab: Starting to fetch data");
+      setIsLoading(true);
+      setError(null);
+      try {
+        console.log("Fetching following for profileId:", profileId);
+        const [followingData, countData] = await Promise.all([
+          getFollowing(profileId),
+          getFollowingCount(profileId),
+        ]);
+
+        console.log("FollowingTab API responses:", {
+          followingData,
+          countData,
+        });
+
+        if (followingData.success) {
+          setFollowing(followingData.following || []);
+        }
+
+        if (countData.success) {
+          setFollowingCount(countData.followingCount || countData.count || 0);
+        }
+      } catch (err) {
+        setFollowing([]);
+        setFollowingCount(0);
+        setError("Failed to fetch following. Please check your connection.");
+      } finally {
+        console.log("FollowingTab: Finished fetching data");
+        setIsLoading(false);
+      }
+    };
+
+    getFollowingData();
+  }, [profileId, authLoading]);
+
+  console.log("FollowingTab render:", { isLoading, followingCount, error });
+
+  if (error) {
+    return (
+      <NetworkErrorComp
+        errMsg={error}
+        reset={() => {
+          setError(null);
+          setIsLoading(true);
+          if (profileId) {
+            Promise.all([getFollowing(profileId), getFollowingCount(profileId)])
+              .then(([followingData, countData]) => {
+                if (followingData.success) {
+                  setFollowing(followingData.following || []);
+                }
+                if (countData.success) {
+                  setFollowingCount(
+                    countData.followingCount || countData.count || 0
+                  );
+                }
+              })
+              .catch(() =>
+                setError(
+                  "Failed to fetch following. Please check your connection."
+                )
+              )
+              .finally(() => setIsLoading(false));
+          }
+        }}
+      />
+    );
+  }
+
+  return (
+    <div className="space-y-4 pt-5">
+      {isLoading ? (
+        <div className="space-y-4">
+          {[...Array(6)].map((_, idx) => (
+            <div
+              key={idx}
+              className="flex items-center gap-4 p-4 bg-surface/30 rounded-lg animate-pulse"
+            >
+              <div className="h-12 w-12 bg-surface rounded-full"></div>
+              <div className="flex-1 space-y-2">
+                <div className="h-4 bg-surface rounded w-1/3"></div>
+                <div className="h-3 bg-surface rounded w-1/2"></div>
+              </div>
+              <div className="h-8 w-20 bg-surface rounded"></div>
+            </div>
+          ))}
+        </div>
+      ) : following && following.length > 0 ? (
+        <div className="space-y-3">
+          {following.map((followedUser) => (
+            <UserCard key={followedUser._id} user={followedUser} />
+          ))}
+        </div>
+      ) : (
+        <Placeholder title="following" />
+      )}
+    </div>
+  );
+};

@@ -17,8 +17,13 @@
 /.next/
 /out/
 
+# Generated service-worker source maps
+/public/sw.js.map
+/public/swe-worker-*.js.map
+
 # production
 /build
+/build.log
 
 # misc
 .DS_Store
@@ -32,6 +37,7 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+!.env.example
 
 # vercel
 .vercel
@@ -40,3 +46,10 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 .idea
+# React Component Preview
+previewConfig.json
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/

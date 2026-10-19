@@ -1,7 +1,10 @@
 "use client";
 
 import React from 'react';
-import Button from '@/components/atoms/form/Button';
+import Link from 'next/link';
+import { cn } from '@/lib/utils';
+import { normalizeRole, ROLES } from '@/lib/auth/roles';
+import { poppins_500 } from '@/lib/config/font.config';
 import {
     LayoutDashboard,
     Settings2Icon,
@@ -9,7 +12,8 @@ import {
     MessageCircleQuestion,
     BellDotIcon,
     ShieldCheck,
-    HelpCircle
+    HelpCircle,
+    BadgeCheck,
 } from "lucide-react";
 import {
     SidebarGroup,
@@ -19,44 +23,57 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import { useSidebar } from '@/components/ui/sidebar';
-const links = [
-    {
-        name: "Dashboard",
-        link: "/dashboard",
-        icon: LayoutDashboard,
-    },
-    {
-        name: "Settings",
-        link: "/account/settings",
-        icon: Settings2Icon,
-    }, {
-        name: "Profile",
-        link: "/account/profile",
-        icon: User2Icon
-    }, {
-        name: "Security",
-        link: "/account/security",
-        icon: ShieldCheck
-    },
-    , {
-        name: "Notifications",
-        link: "/account/notifications",
-        icon: BellDotIcon
-    },
-    {
-        name: "Support",
-        link: "/account/support",
-        icon: HelpCircle,
-      },
-];
+import { useAuth } from "@/hooks/useAuth";
 
 const AccountRouter = () => {
     const pathname = usePathname();
-    const { isMobile, setOpenMobile } = useSidebar(); // ⬅️ use the context
+    const { isMobile, setOpenMobile } = useSidebar();
+    const currentUser = useAuth()?.user || null; // ✅ Now inside the component
+
+    const links = [
+        {
+            name: "Dashboard",
+            link: "/dashboard",
+            icon: LayoutDashboard,
+        },
+        {
+            name: "Settings",
+            link: "/account/settings",
+            icon: Settings2Icon,
+        },
+        {
+            name: "Profile",
+            link: `/account/profile/${currentUser?._id}`,
+            icon: User2Icon
+        },
+        {
+            name: "Security",
+            link: "/account/security",
+            icon: ShieldCheck
+        },
+        {
+            name: "Notifications",
+            link: "/account/notifications",
+            icon: BellDotIcon
+        },
+        // Only shown for educators — the page itself handles non-educator states gracefully
+        ...(normalizeRole(currentUser?.role) === ROLES.EDUCATOR
+            ? [{
+                name: "Verification",
+                link: "/account/verification",
+                icon: BadgeCheck,
+            }]
+            : []),
+        {
+            name: "Support",
+            link: "/account/support",
+            icon: HelpCircle,
+        },
+    ];
 
     const handleNavClick = () => {
         if (isMobile) {
-            setOpenMobile(false); // ⬅️ close sidebar if mobile
+            setOpenMobile(false);
         }
     };
 
@@ -72,18 +89,20 @@ const AccountRouter = () => {
 
                         return (
                             <SidebarMenuItem key={item.name}>
-                                <Button
-                                    wide
-                                    outlined
-                                    round
-                                    to={item.link}
-                                    onClick={handleNavClick} // ⬅️ close sidebar on click
-                                    className={`flex justify-start items-center pl-16 ${isActive ? "bg-accent text-white" : ""
-                                        }`}
+                                <Link
+                                    href={item.link}
+                                    onClick={handleNavClick}
+                                    className={cn(
+                                        poppins_500,
+                                        "flex w-full items-center gap-3 rounded-xl px-4 py-2.5 text-sm transition-colors",
+                                        isActive
+                                            ? "bg-accent text-white shadow-sm"
+                                            : "text-ink hover:bg-secondary/10 hover:text-accent"
+                                    )}
                                 >
-                                    <item.icon size={15} className="mr-4" />
+                                    <item.icon size={18} className="shrink-0" />
                                     <span>{item.name}</span>
-                                </Button>
+                                </Link>
                             </SidebarMenuItem>
                         );
                     })}
