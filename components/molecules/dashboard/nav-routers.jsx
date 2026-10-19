@@ -10,9 +10,11 @@ import {
   Play,
   LaptopMinimal,
   HeartHandshake,
+  GraduationCap,
   ShoppingBag,
   DollarSign,
   Bookmark,
+  LayoutGrid,
 } from "lucide-react";
 import {
   SidebarGroup,
@@ -21,57 +23,69 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
+import { useTranslations } from "next-intl";
 import { useSidebar } from '@/components/ui/sidebar';
+// `key` maps to the `dashboard.sidebar.routes` message catalog.
 const links = [
   {
-    name: "Dashboard",
+    key: "dashboard",
     link: "/dashboard",
     icon: LayoutDashboard,
   },
   {
-    name: "Courses",
+    key: "courses",
     link: "/dashboard/courses",
     icon: LaptopMinimal,
   },
   {
-    name: "Library",
+    key: "categories",
+    link: "/dashboard/courses/categories",
+    icon: LayoutGrid,
+  },
+  {
+    key: "library",
     link: "/dashboard/library",
     icon: Book,
   },
   {
-    name: "Saved",
+    key: "saved",
     link: "/dashboard/saved",
     icon: Bookmark,
   },
   {
-    name: "Spaces",
+    key: "spaces",
     link: "/dashboard/spaces",
     icon: AudioWaveform,
   },
   {
-    name: "Reels",
+    key: "reels",
     link: "/dashboard/reels",
     icon: Play,
   },
 
   {
-    name: "Messages",
+    key: "messages",
     link: "/dashboard/messages",
     icon: Inbox,
   },
 
   {
-    name: "Sadaqah",
+    key: "sadaqah",
     link: "/dashboard/sadaqah",
     icon: HeartHandshake,
   },
   {
-    name: "My Purchases",
+    key: "scholarships",
+    link: "/dashboard/scholarships",
+    icon: GraduationCap,
+  },
+  {
+    key: "purchases",
     link: "/dashboard/purchases",
     icon: ShoppingBag,
   },
   {
-    name: "Earnings",
+    key: "earnings",
     link: "/dashboard/earnings",
     icon: DollarSign,
   },
@@ -79,6 +93,7 @@ const links = [
 ];
 
 const Navrouter = () => {
+  const t = useTranslations("dashboard.sidebar.routes");
   const pathname = usePathname();
   const { isMobile, setOpenMobile } = useSidebar(); // ⬅️ use the context
 
@@ -99,18 +114,18 @@ const Navrouter = () => {
                 : pathname.startsWith(item.link);
 
             return (
-              <SidebarMenuItem key={item.name}>
+              <SidebarMenuItem key={item.key}>
                 <Button
                   wide
                   outlined
                   round
                   to={item.link}
                   onClick={handleNavClick} // ⬅️ close sidebar on click
-                  className={`flex justify-start items-center pl-16 ${isActive ? "bg-accent text-white" : ""
+                  className={`flex justify-start items-center ps-16 ${isActive ? "bg-accent text-white" : ""
                     }`}
                 >
-                  <item.icon size={15} className="mr-4" />
-                  <span>{item.name}</span>
+                  <item.icon size={15} className="me-4" />
+                  <span>{t(item.key)}</span>
                 </Button>
               </SidebarMenuItem>
             );

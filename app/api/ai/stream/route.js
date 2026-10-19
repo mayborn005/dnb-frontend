@@ -1,4 +1,5 @@
 
+import { config } from "@/lib/config/env";
 
 export async function POST(req) {
   try {
@@ -10,10 +11,13 @@ export async function POST(req) {
       user_id,
     });
 
-    // Use environment variable or fallback to localhost
-    const AI_API_URL =
-      process.env.NEXT_PUBLIC_AI_API_URL || "http://localhost:8000";
+    const AI_API_URL = config.aiApiUrl;
     const endpoint = `${AI_API_URL}/chat/stream`;
+    const serviceApiKey = process.env.AI_SERVICE_API_KEY;
+
+    if (!serviceApiKey) {
+      throw new Error("AI_SERVICE_API_KEY is not configured");
+    }
 
     // Make request to AI backend
     const response = await fetch(endpoint, {
@@ -21,6 +25,7 @@ export async function POST(req) {
       headers: {
         "Content-Type": "application/json",
         Accept: "text/event-stream",
+        "X-API-Key": serviceApiKey,
       },
       body: JSON.stringify({
         prompt: message,

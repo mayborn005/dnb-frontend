@@ -19,7 +19,7 @@ const NotFoundComp = ({
     if (window.history.length > 2) {
       router.back();
     } else {
-      router.push(isDashboard ? "/dashboard/classes" : "/login");
+      router.push(isDashboard ? "/dashboard" : "/login");
     }
   };
 
@@ -35,7 +35,7 @@ const NotFoundComp = ({
     <Image
       height="222"
       width="443"
-      alt="404-image"
+      alt=""
       src="/svgs/404_image.svg"
       priority
       className="mb-12 hidden lg:block"
@@ -43,7 +43,7 @@ const NotFoundComp = ({
     <Image
       height="300"
       width="300"
-      alt="404-image"
+      alt=""
       priority
       src="/svgs/404_image.svg"
       className="mb-14 block lg:hidden"
