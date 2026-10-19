@@ -12,6 +12,14 @@ import {
   CommandSeparator,
 } from "@/components/ui/command";
 import { searchQuery } from "@/hooks/useSearch";
+import { useCan } from "@/hooks/useCan";
+import { CAPABILITIES } from "@/lib/auth/roles";
+import { cn } from "@/lib/utils";
+import {
+  poppins_400,
+  poppins_500,
+  poppins_600,
+} from "@/lib/config/font.config";
 import {
   LaptopMinimal,
   Book,
@@ -32,6 +40,7 @@ import {
   Loader2,
   AlertCircle,
   ArrowRight,
+  LayoutGrid,
 } from "lucide-react";
 
 const RECENT_SEARCHES_KEY = "dnb_recent_searches";
@@ -66,13 +75,14 @@ const getTypeIcon = (type) => {
     case "reel":
       return <Play className="h-4 w-4 text-pink-500" />;
     default:
-      return <Search className="h-4 w-4 text-muted-foreground" />;
+      return <Search className="h-4 w-4 text-ink-muted" />;
   }
 };
 
 const primaryDestinations = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
   { name: "Courses", href: "/dashboard/courses", icon: LaptopMinimal },
+  { name: "Categories", href: "/dashboard/courses/categories", icon: LayoutGrid },
   { name: "Library", href: "/dashboard/library", icon: Book },
   { name: "Saved", href: "/dashboard/saved", icon: Bookmark },
   { name: "Spaces", href: "/dashboard/spaces", icon: AudioWaveform },
@@ -84,12 +94,23 @@ const primaryDestinations = [
 ];
 
 const quickActions = [
-  { name: "Create Course", href: "/dashboard/courses/create", icon: PlusCircle },
+  {
+    name: "Create Course",
+    href: "/dashboard/courses/create",
+    icon: PlusCircle,
+    capability: CAPABILITIES.COURSE_CREATE,
+  },
   { name: "Open Wallet", href: "/dashboard/earnings", icon: Wallet },
 ];
 
 export function CommandPalette() {
   const router = useRouter();
+  const { can } = useCan();
+  // Hide capability-gated quick actions the current user can't perform
+  // (defense-in-depth; the server remains the source of truth).
+  const visibleQuickActions = quickActions.filter(
+    (action) => !action.capability || can(action.capability)
+  );
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState("");
   const [results, setResults] = useState([]);
@@ -282,13 +303,19 @@ export function CommandPalette() {
     >
       <CommandInput
         placeholder="Type a command or search courses, books, educators..."
+        aria-label="Search"
         value={query}
         onValueChange={setQuery}
       />
       <CommandList>
         {/* Loading state */}
         {loading && (
-          <div className="flex items-center justify-center gap-2 py-6 text-sm text-muted-foreground">
+          <div
+            className={cn(
+              poppins_400,
+              "flex items-center justify-center gap-2 py-6 text-sm text-ink-muted"
+            )}
+          >
             <Loader2 className="h-4 w-4 animate-spin text-accent" />
             <span>Searching...</span>
           </div>
@@ -296,7 +323,12 @@ export function CommandPalette() {
 
         {/* Error state */}
         {!loading && error && (
-          <div className="flex items-center justify-center gap-2 py-6 text-sm text-red-500">
+          <div
+            className={cn(
+              poppins_400,
+              "flex items-center justify-center gap-2 py-6 text-sm text-red-600"
+            )}
+          >
             <AlertCircle className="h-4 w-4" />
             <span>Failed to load search results. Please try again.</span>
           </div>
@@ -304,7 +336,9 @@ export function CommandPalette() {
 
         {/* Empty state when query produces 0 results */}
         {!loading && !error && hasSearchTerm && results.length === 0 && (
-          <CommandEmpty>No results found for &quot;{query}&quot;</CommandEmpty>
+          <CommandEmpty className={cn(poppins_400, "text-ink-muted")}>
+            No results found for &quot;{query}&quot;
+          </CommandEmpty>
         )}
 
         {/* Search Results (Grouped by type) */}
@@ -325,15 +359,27 @@ export function CommandPalette() {
                     >
                       {getTypeIcon("course")}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="truncate font-medium">{title}</span>
+                        <span className={cn(poppins_500, "truncate text-ink")}>
+                          {title}
+                        </span>
                         {item.description && (
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span
+                            className={cn(
+                              poppins_400,
+                              "truncate text-xs text-ink-muted"
+                            )}
+                          >
                             {item.description}
                           </span>
                         )}
                       </div>
                       {item.price !== undefined && (
-                        <span className="ml-auto text-xs text-muted-foreground">
+                        <span
+                          className={cn(
+                            poppins_500,
+                            "ml-auto text-xs text-ink-muted"
+                          )}
+                        >
                           {item.price ? `$${item.price}` : "Free"}
                         </span>
                       )}
@@ -358,9 +404,16 @@ export function CommandPalette() {
                     >
                       {getTypeIcon("book")}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="truncate font-medium">{title}</span>
+                        <span className={cn(poppins_500, "truncate text-ink")}>
+                          {title}
+                        </span>
                         {item.author && (
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span
+                            className={cn(
+                              poppins_400,
+                              "truncate text-xs text-ink-muted"
+                            )}
+                          >
                             By {typeof item.author === "object" ? item.author.name : item.author}
                           </span>
                         )}
@@ -386,9 +439,16 @@ export function CommandPalette() {
                     >
                       {getTypeIcon("user")}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="truncate font-medium">{title}</span>
+                        <span className={cn(poppins_500, "truncate text-ink")}>
+                          {title}
+                        </span>
                         {item.role && (
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span
+                            className={cn(
+                              poppins_400,
+                              "truncate text-xs text-ink-muted"
+                            )}
+                          >
                             {item.role}
                           </span>
                         )}
@@ -414,9 +474,16 @@ export function CommandPalette() {
                     >
                       {getTypeIcon("space")}
                       <div className="flex flex-col flex-1 min-w-0">
-                        <span className="truncate font-medium">{title}</span>
+                        <span className={cn(poppins_500, "truncate text-ink")}>
+                          {title}
+                        </span>
                         {item.description && (
-                          <span className="truncate text-xs text-muted-foreground">
+                          <span
+                            className={cn(
+                              poppins_400,
+                              "truncate text-xs text-ink-muted"
+                            )}
+                          >
                             {item.description}
                           </span>
                         )}
@@ -442,7 +509,7 @@ export function CommandPalette() {
                     query.trim()
                   )
                 }
-                className="cursor-pointer text-accent font-medium"
+                className={cn(poppins_500, "cursor-pointer text-accent")}
               >
                 <Search className="h-4 w-4 mr-2" />
                 <span>See all results for &quot;{query}&quot;</span>
@@ -464,7 +531,10 @@ export function CommandPalette() {
                     <button
                       type="button"
                       onClick={clearRecentSearches}
-                      className="text-xs text-muted-foreground hover:text-red-500 transition-colors cursor-pointer flex items-center gap-1 font-normal"
+                      className={cn(
+                        poppins_400,
+                        "text-xs text-ink-muted hover:text-red-600 transition-colors cursor-pointer flex items-center gap-1"
+                      )}
                     >
                       <Trash2 className="h-3 w-3" />
                       Clear all
@@ -481,8 +551,8 @@ export function CommandPalette() {
                     }}
                     className="cursor-pointer"
                   >
-                    <Clock className="h-4 w-4 text-muted-foreground" />
-                    <span>{term}</span>
+                    <Clock className="h-4 w-4 text-ink-muted" />
+                    <span className={cn(poppins_400, "text-ink")}>{term}</span>
                   </CommandItem>
                 ))}
               </CommandGroup>
@@ -500,7 +570,9 @@ export function CommandPalette() {
                   className="cursor-pointer"
                 >
                   <dest.icon className="h-4 w-4 text-accent" />
-                  <span>{dest.name}</span>
+                  <span className={cn(poppins_500, "text-ink")}>
+                    {dest.name}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -509,7 +581,7 @@ export function CommandPalette() {
 
             {/* Quick Actions */}
             <CommandGroup heading="Quick Actions">
-              {quickActions.map((action) => (
+              {visibleQuickActions.map((action) => (
                 <CommandItem
                   key={action.name}
                   value={`action-${action.name}`}
@@ -517,7 +589,9 @@ export function CommandPalette() {
                   className="cursor-pointer"
                 >
                   <action.icon className="h-4 w-4 text-accent" />
-                  <span>{action.name}</span>
+                  <span className={cn(poppins_500, "text-ink")}>
+                    {action.name}
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
