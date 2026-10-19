@@ -4,7 +4,6 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { toast } from "sonner";
 import axiosInstance from "@/lib/config/axios.config";
-import config from "@/lib/config/req.header.config";
 
 const AuthContext = createContext(null);
 
@@ -67,6 +66,21 @@ export default function AuthProvider({ children }) {
     };
   }, [setAuthState]);
 
+  // Anonymous error-tracking context: id only, never email or name.
+  useEffect(() => {
+    let active = true;
+    import("@sentry/nextjs")
+      .then((mod) => {
+        const Sentry = mod.default ?? mod;
+        if (!active || !Sentry || typeof Sentry.setUser !== "function") return;
+        Sentry.setUser(user?._id ? { id: user._id } : null);
+      })
+      .catch(() => {});
+    return () => {
+      active = false;
+    };
+  }, [user?._id]);
+
   const logout = useCallback(() => {
     Cookies.remove("authToken", { path: "/" });
     Cookies.remove("userInfo", { path: "/" });
@@ -91,7 +105,7 @@ export default function AuthProvider({ children }) {
 
   const refreshUser = useCallback(async (userId) => {
     try {
-      const res = await axiosInstance.get(`/api/users/${userId}`, config);
+      const res = await axiosInstance.get(`/api/users/${userId}`);
       if (res.data && (res.data.user || res.data)) {
         let freshUser = res.data.user || res.data;
         if (freshUser.id && !freshUser._id) freshUser._id = freshUser.id;

@@ -17,8 +17,13 @@
 /.next/
 /out/
 
+# Generated service-worker source maps
+/public/sw.js.map
+/public/swe-worker-*.js.map
+
 # production
 /build
+/build.log
 
 # misc
 .DS_Store
@@ -43,3 +48,8 @@ next-env.d.ts
 .idea
 # React Component Preview
 previewConfig.json
+# Playwright
+/test-results/
+/playwright-report/
+/blob-report/
+/playwright/.cache/
