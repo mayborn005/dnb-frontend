@@ -25,7 +25,7 @@ function SelectValue({
 }
 
 function SelectTrigger({
-  className,
+  className = "",
   size = "default",
   children,
   ...props
@@ -48,7 +48,7 @@ function SelectTrigger({
 }
 
 function SelectContent({
-  className,
+  className = "",
   children,
   position = "popper",
   ...props
@@ -78,7 +78,7 @@ function SelectContent({
 }
 
 function SelectLabel({
-  className,
+  className = "",
   ...props
 }) {
   return (
@@ -90,7 +90,7 @@ function SelectLabel({
 }
 
 function SelectItem({
-  className,
+  className = "",
   children,
   ...props
 }) {
@@ -98,7 +98,7 @@ function SelectItem({
     (<SelectPrimitive.Item
       data-slot="select-item"
       className={cn(
-        "focus:bg-green-100 focus:text-accent-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
+        "focus:bg-primary/15 focus:text-foreground [&_svg:not([class*='text-'])]:text-muted-foreground relative flex w-full cursor-default items-center gap-2 rounded-sm py-1.5 pr-8 pl-2 text-sm outline-hidden select-none data-[disabled]:pointer-events-none data-[disabled]:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4 *:[span]:last:flex *:[span]:last:items-center *:[span]:last:gap-2",
         className
       )}
       {...props}>

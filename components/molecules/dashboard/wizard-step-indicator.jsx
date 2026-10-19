@@ -26,7 +26,7 @@ export default function WizardStepIndicator({
                 disabled={!isClickable}
                 aria-current={isActive ? "step" : undefined}
                 onClick={() => isClickable && onStepClick && onStepClick(idx)}
-                className={`flex items-center gap-2 group text-left focus:outline-none ${
+                className={`flex items-center gap-2 group text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
                   isClickable ? "cursor-pointer" : "cursor-not-allowed opacity-60"
                 }`}
               >
@@ -35,7 +35,7 @@ export default function WizardStepIndicator({
                     isCompleted
                       ? "bg-accent text-white"
                       : isActive
-                      ? "bg-accent/20 border-2 border-accent text-accent font-bold"
+                      ? "bg-accent/20 border-2 border-accent text-brand-text font-bold"
                       : "bg-muted border border-gray-300 text-muted-foreground"
                   }`}
                 >
@@ -46,7 +46,7 @@ export default function WizardStepIndicator({
                     isActive
                       ? "text-foreground font-semibold"
                       : isCompleted
-                      ? "text-accent"
+                      ? "text-brand-text"
                       : "text-muted-foreground"
                   }`}
                 >

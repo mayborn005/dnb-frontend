@@ -1,11 +1,13 @@
 import Image from "next/image";
 import Button from "@/components/atoms/form/Button";
-import { Star } from "lucide-react"; // optional: use a custom star icon or emoji
+import { Star, Ban } from "lucide-react"; // optional: use a custom star icon or emoji
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import { getAverageRating } from "@/hooks/getAverageRating";
 import useBookBookmark from "@/hooks/useBookBookmark";
 import BookmarkButton from "@/components/atoms/BookmarkButton";
+import { VerifiedBadge } from "@/components/atoms/VerifiedBadge";
 
 const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
   const { isBookmarked, loading, toggle } = useBookBookmark(
@@ -21,7 +23,7 @@ const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
   };
 
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-md w-full max-w-md mx-auto">
+    <div className="bg-card rounded-2xl overflow-hidden shadow-md w-full max-w-md mx-auto">
       {/* Image with overlay */}
       <div className="relative w-full h-64">
         <Image
@@ -41,6 +43,14 @@ const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
             </span>
           </div>
         </div>
+        {book.status === "taken-down" && (
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-red-600 text-white text-xs gap-1">
+              <Ban className="h-3 w-3" />
+              Taken Down
+            </Badge>
+          </div>
+        )}
       </div>
       {/* Author, Reads, Rating */}
       <div className="px-4 py-4 flex flex-col gap-3 text-sm text-muted-foreground">
@@ -51,14 +61,17 @@ const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
             className="flex items-center gap-2"
           >
             <Avatar className="h-10 w-10 rounded-lg">
-              <AvatarImage src={book.author?.avatar || "/images/img1.jpeg"} />
+              <AvatarImage src={book.author?.avatar || "/images/img1.jpeg"} alt="" />
               <AvatarFallback>
                 {book.author?.name?.charAt(0) || "A"}
               </AvatarFallback>
             </Avatar>
             <div className="flex flex-col pt-2">
-              <span className="font-medium text-black">
+              <span className="font-medium text-foreground">
                 {book.author?.name || "Unknown Author"}
+                {book.author?.isVerified && (
+                  <VerifiedBadge user={book.author} showLabel={false} />
+                )}
               </span>
               <span className="text-sm">
                 {book.author?.role || "Unknown Author"}
@@ -77,6 +90,9 @@ const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
         <div className="flex justify-between items-center text-xs">
           <span>{book.readCount || 0} readers</span>
           <div className="flex items-center gap-0.5 text-yellow-500">
+            <span className="sr-only">
+              Rated {Math.round(getAverageRating(book?.reviews) || 0)} out of 5
+            </span>
             {[...Array(5)].map((_, i) => (
               <Star
                 key={`${book._id}-star-${i}`}
@@ -87,6 +103,7 @@ const LibraryBookCard = ({ book, onBookmarkChange, initialIsBookmarked }) => {
                     : "none"
                 }
                 stroke="#FFD700"
+                aria-hidden="true"
               />
             ))}
           </div>
